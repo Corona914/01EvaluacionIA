@@ -1,7 +1,6 @@
 import streamlit as st
 import time
-from collections import deque
-
+from problemas.algoritmos.busqueda_no_informada import busqueda_bfs, busqueda_dfs
 
 MAPA_4x4 = [
     ['S', 'F', 'F', 'F'],
@@ -22,57 +21,6 @@ ICONOS = {
     'G': "🎁", 
     'A': "🐧"  
 }
-
-
-def obtener_vecinos(x, y):
-    """Devuelve las posiciones adyacentes válidas (Derecha, Abajo, Izquierda, Arriba)."""
-    movimientos = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    vecinos = []
-    for dx, dy in movimientos:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < FILAS and 0 <= ny < COLUMNAS:
-            vecinos.append((nx, ny))
-    return vecinos
-
-def busqueda_bfs():
-    """Búsqueda a lo ancho: Explora nivel por nivel (Garantiza ruta más corta)."""
-    cola = deque([(INICIO, [INICIO])]) #fifo
-    visitados = set([INICIO])
-    nodos_explorados = 0
-
-    while cola:
-        (x, y), camino = cola.popleft()
-        nodos_explorados += 1
-
-        if MAPA_4x4[x][y] == 'G':
-            return camino, nodos_explorados
-
-        for nx, ny in obtener_vecinos(x, y):
-            if (nx, ny) not in visitados and MAPA_4x4[nx][ny] != 'H':
-                visitados.add((nx, ny))
-                cola.append(((nx, ny), camino + [(nx, ny)]))
-                
-    return None, nodos_explorados
-
-def busqueda_dfs():
-    """Búsqueda en profundidad: Explora una rama hasta el fondo antes de retroceder."""
-    pila = [(INICIO, [INICIO])]
-    visitados = set([INICIO])
-    nodos_explorados = 0
-
-    while pila:
-        (x, y), camino = pila.pop() # LIFO (Last In, First Out)
-        nodos_explorados += 1
-
-        if MAPA_4x4[x][y] == 'G':
-            return camino, nodos_explorados
-
-        for nx, ny in obtener_vecinos(x, y):
-            if (nx, ny) not in visitados and MAPA_4x4[nx][ny] != 'H':
-                visitados.add((nx, ny))
-                pila.append(((nx, ny), camino + [(nx, ny)]))
-                
-    return None, nodos_explorados
 
 # --- INTERFAZ STREAMLIT ---
 
@@ -134,9 +82,9 @@ def mostrar_interfaz():
         info_placeholder.info("⏳ Calculando ruta óptima...")
         
         if "BFS" in algoritmo:
-            camino, nodos = busqueda_bfs()
+            camino, nodos = busqueda_bfs(MAPA_4x4, INICIO)
         else:
-            camino, nodos = busqueda_dfs()
+            camino, nodos = busqueda_dfs(MAPA_4x4, INICIO)
 
         if camino:
             # Animación paso a paso
