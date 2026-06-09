@@ -2,13 +2,12 @@ import streamlit as st
 import time
 from collections import deque
 
-# --- DEFINICIÓN DEL ENTORNO ---
-# S: Start, F: Frozen (Seguro), H: Hole (Agujero), G: Goal (Meta)
+
 MAPA_4x4 = [
     ['S', 'F', 'F', 'F'],
     ['F', 'H', 'F', 'H'],
-    ['F', 'F', 'F', 'H'],
-    ['H', 'F', 'F', 'G']
+    ['F', 'F', 'F', 'G'],
+    ['H', 'F', 'F', 'F']
 ]
 
 FILAS = len(MAPA_4x4)
@@ -17,14 +16,13 @@ INICIO = (0, 0)
 
 # Diccionario para hacer la interfaz más visual
 ICONOS = {
-    'S': "🧊", # Inicio
-    'F': "❄️", # Hielo seguro
-    'H': "🕳️", # Agujero
-    'G': "🎁", # Meta
-    'A': "🐧"  # Agente (Pingüino)
+    'S': "🧊", 
+    'F': "❄️", 
+    'H': "🕳️", 
+    'G': "🎁", 
+    'A': "🐧"  
 }
 
-# --- ALGORITMOS DE BÚSQUEDA NO INFORMADA ---
 
 def obtener_vecinos(x, y):
     """Devuelve las posiciones adyacentes válidas (Derecha, Abajo, Izquierda, Arriba)."""
@@ -38,7 +36,7 @@ def obtener_vecinos(x, y):
 
 def busqueda_bfs():
     """Búsqueda a lo ancho: Explora nivel por nivel (Garantiza ruta más corta)."""
-    cola = deque([(INICIO, [INICIO])])
+    cola = deque([(INICIO, [INICIO])]) #fifo
     visitados = set([INICIO])
     nodos_explorados = 0
 
@@ -80,45 +78,60 @@ def busqueda_dfs():
 
 def renderizar_mapa(posicion_agente):
     """Genera el HTML del mapa con la posición actual del agente."""
-    html = "<table style='border-collapse: collapse; margin-left: auto; margin-right: auto;'>"
+    # CSS dinámico aprovechando variables de Streamlit para ser adaptativo
+    html = "<table style='border-collapse: separate; border-spacing: 8px; margin: 0 auto;'>"
     for f in range(FILAS):
         html += "<tr>"
         for c in range(COLUMNAS):
             celda = MAPA_4x4[f][c]
             contenido = ICONOS['A'] if (f, c) == posicion_agente else ICONOS[celda]
             
-            # Colores de fondo según el tipo de celda
-            color = "#E0F7FA" if celda in ['S', 'F'] else "#FFEBEE" if celda == 'H' else "#E8F5E9"
+            # Estilo minimalista dependiente de la celda
+            fondo = "background-color: var(--secondary-background-color);"
+            if celda == 'H': fondo = "background-color: rgba(255, 75, 75, 0.15);"
+            elif celda == 'G': fondo = "background-color: rgba(75, 255, 75, 0.15);"
             
-            html += f"<td style='width:60px; height:60px; background-color:{color}; text-align:center; font-size:30px; border: 1px solid #ccc;'>{contenido}</td>"
+            html += f"<td style='width: 75px; height: 75px; {fondo} text-align: center; font-size: 35px; border-radius: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s ease;'>{contenido}</td>"
         html += "</tr>"
     html += "</table>"
     return html
 
 def mostrar_interfaz():
-    st.subheader("Búsqueda No Informada: Frozen Lake")
-    st.write("El pingüino 🐧 debe llegar al regalo 🎁 cruzando el hielo ❄️ sin caer en los agujeros 🕳️.")
+    st.title("🧊 Frozen Lake")
+    st.markdown("---")
 
-    col1, col2 = st.columns([1, 2])
+    col_info, col_mapa = st.columns([1, 2])
 
-    with col1:
-        st.write("### Configuración")
-        algoritmo = st.radio("Selecciona el algoritmo:", ["BFS (Búsqueda a lo ancho)", "DFS (Búsqueda en profundidad)"])
-        velocidad = st.slider("Velocidad de animación (segundos)", 0.1, 1.0, 0.4)
+    with col_info:
+        st.markdown(
+            "Ayuda al pingüino 🐧 a llegar al regalo 🎁.<br>"
+            "Cruza el hielo ❄️ y evita los agujeros 🕳️.",
+            unsafe_allow_html=True
+        )
+        st.write("")
         
-        ejecutar = st.button("Ejecutar Búsqueda", type="primary")
-
-    with col2:
-        st.write("### Visualización del Entorno")
-        # Contenedor vacío para poder actualizar el mapa dinámicamente
-        mapa_placeholder = st.empty()
+        st.markdown("##### ⚙️ Algoritmo")
+        # Selectbox en lugar de radio para ahorrar espacio (minimalista)
+        algoritmo = st.selectbox("Alg", ["BFS (Garantiza ruta corta)", "DFS (Búsqueda profunda)"], label_visibility="collapsed")
+        
+        st.markdown("##### ⏱️ Velocidad")
+        velocidad = 0.75
+        
+        st.write("")
+        ejecutar = st.button("🚀 Iniciar", type="primary", use_container_width=True)
+        st.write("")
+        
+        # Aquí se mostrarán resultados o métricas
         info_placeholder = st.empty()
-        
-        # Renderizar mapa inicial
+
+    with col_mapa:
+        # Contenedor para el mapa HTML centrado vertical y horizontalmente
+        st.write("") 
+        mapa_placeholder = st.empty()
         mapa_placeholder.markdown(renderizar_mapa(INICIO), unsafe_allow_html=True)
 
     if ejecutar:
-        info_placeholder.info("Calculando ruta...")
+        info_placeholder.info("⏳ Calculando ruta óptima...")
         
         if "BFS" in algoritmo:
             camino, nodos = busqueda_bfs()
@@ -129,9 +142,10 @@ def mostrar_interfaz():
             # Animación paso a paso
             for paso, (px, py) in enumerate(camino):
                 mapa_placeholder.markdown(renderizar_mapa((px, py)), unsafe_allow_html=True)
-                info_placeholder.success(f"Paso {paso}/{len(camino)-1} | Nodos explorados en total: {nodos}")
+                info_placeholder.code(f"🗺️ Paso {paso}/{len(camino)-1}\n🔍 Nodos: {nodos}")
                 time.sleep(velocidad)
             
-            info_placeholder.success(f"¡Meta alcanzada en {len(camino)-1} pasos! (Algoritmo evaluó {nodos} nodos)")
+            st.toast(f"¡Meta alcanzada en {len(camino)-1} pasos!", icon="🎉")
+            info_placeholder.success(f"**¡Completado!**\n\nPasos: {len(camino)-1} | Evaluación: {nodos} nodos")
         else:
-            info_placeholder.error("No se encontró una ruta posible.")
+            info_placeholder.error("❌ No se encontró una ruta posible.")

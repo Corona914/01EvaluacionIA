@@ -1,7 +1,6 @@
 import streamlit as st
 import math
 
-# --- LÓGICA DE MINIMAX ---
 def verificar_ganador(tablero):
     lineas = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8], # Filas
@@ -17,7 +16,7 @@ def verificar_ganador(tablero):
 
 def minimax(tablero, profundidad, es_maximizador):
     ganador = verificar_ganador(tablero)
-    if ganador == "O": return 10 - profundidad
+    if ganador == "O": return 10 - profundidad #IA MAX
     if ganador == "X": return profundidad - 10
     if ganador == "Empate": return 0
 
@@ -27,7 +26,7 @@ def minimax(tablero, profundidad, es_maximizador):
             if tablero[i] == " ":
                 tablero[i] = "O"
                 puntaje = minimax(tablero, profundidad + 1, False)
-                tablero[i] = " "
+                tablero[i] = " " #backtracking
                 mejor_puntaje = max(puntaje, mejor_puntaje)
         return mejor_puntaje
     else:
@@ -45,7 +44,7 @@ def mejor_movimiento(tablero):
     movimiento = None
     for i in range(9):
         if tablero[i] == " ":
-            tablero[i] = "O" # La IA juega como 'O'
+            tablero[i] = "O" 
             puntaje = minimax(tablero, 0, False)
             tablero[i] = " "
             if puntaje > mejor_puntaje:
@@ -54,9 +53,53 @@ def mejor_movimiento(tablero):
     return movimiento
 
 # --- INTERFAZ STREAMLIT ---
+@st.dialog("¡Fin del Juego!")
+def popup_resultado(ganador):
+    if ganador == "Empate":
+        st.info("¡Es un reñido empate! ")
+    elif ganador == "X":
+        st.success("¡Increíble! Has derrotado a la IA. 🎉")
+        st.balloons()
+    else:
+        st.error("¡Has perdido! La IA ha demostrado ser superior.")
+
+    if st.button("Volver a Jugar", type="primary", use_container_width=True):
+        st.session_state.tablero_gato = [" "] * 9
+        st.session_state.ganador_gato = None
+        st.rerun()
+
 def mostrar_interfaz():
-    st.subheader("Búsqueda Adversaria: Minimax (Gato)")
-    st.write("Juegas como **X**. La IA (O) utiliza el algoritmo Minimax para predecir todos los estados futuros posibles y elegir la ruta óptima.")
+    st.title("🎮 Gato vs IA (Minimax)")
+    st.markdown("---")
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.markdown(
+            "Enfréntate a la IA utilizando el algoritmo **Minimax**.\n\n"
+            "Tú juegas como **❌** y tienes el primer turno."
+        )
+    with col2:
+        if st.button("🔄 Reiniciar Partida", use_container_width=True):
+            st.session_state.tablero_gato = [" "] * 9
+            st.session_state.ganador_gato = None
+            st.rerun()
+
+    # Estilos CSS modernos para los botones del gato
+    st.markdown("""
+        <style>
+        div[data-testid="stButton"] button {
+            height: 100px;
+            font-size: 40px !important;
+            font-weight: bold;
+            border-radius: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        div[data-testid="stButton"] button:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
     if 'tablero_gato' not in st.session_state:
         st.session_state.tablero_gato = [" "] * 9
@@ -75,27 +118,26 @@ def mostrar_interfaz():
                     st.session_state.tablero_gato[mov] = "O"
                     st.session_state.ganador_gato = verificar_ganador(st.session_state.tablero_gato)
 
-    # Dibujar tablero
-    cols = st.columns([1,1,1, 3]) # El 3 es para dejar espacio en blanco a la derecha
+    st.write("")
     
-    for i in range(9):
-        with cols[i % 3]:
-            # Usamos botones para la cuadrícula
-            st.button(
-                st.session_state.tablero_gato[i] if st.session_state.tablero_gato[i] != " " else "  ", 
-                key=f"btn_{i}", 
-                on_click=jugar, 
-                args=(i,),
-                use_container_width=True
-            )
+    # Dibujar tablero (centrado en la pantalla)
+    col_izq, col_centro, col_der = st.columns([1, 2, 1])
+    
+    with col_centro:
+        for fila in range(3):
+            cols = st.columns(3)
+            for col in range(3):
+                idx = fila * 3 + col
+                with cols[col]:
+                    valor = st.session_state.tablero_gato[idx]
+                    simbolo = "❌" if valor == "X" else "🔵" if valor == "O" else " "
+                    st.button(
+                        simbolo, 
+                        key=f"btn_{idx}", 
+                        on_click=jugar, 
+                        args=(idx,),
+                        use_container_width=True
+                    )
 
     if st.session_state.ganador_gato:
-        if st.session_state.ganador_gato == "Empate":
-            st.warning("¡Es un empate!")
-        else:
-            st.success(f"Ganador: {st.session_state.ganador_gato}")
-        
-        if st.button("Reiniciar Juego"):
-            st.session_state.tablero_gato = [" "] * 9
-            st.session_state.ganador_gato = None
-            st.rerun()
+        popup_resultado(st.session_state.ganador_gato)
