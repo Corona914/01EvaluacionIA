@@ -62,7 +62,6 @@ def mostrar_interfaz():
         # Selectbox en lugar de radio para ahorrar espacio (minimalista)
         algoritmo = st.selectbox("Alg", ["BFS (Garantiza ruta corta)", "DFS (Búsqueda profunda)"], label_visibility="collapsed")
         
-        st.markdown("##### ⏱️ Velocidad")
         velocidad = 0.75
         
         st.write("")
