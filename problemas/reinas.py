@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 from problemas.algoritmos.hill_climbing import evaluar, obtener_mejor_vecino
+from problemas.algoritmos.simulated_annealing import paso_simulated_annealing
 
 # --- INTERFAZ STREAMLIT ---
 def renderizar_tablero(estado):
@@ -42,6 +43,8 @@ def mostrar_interfaz():
             st.session_state.reinas_estado = np.random.randint(0, 8, 8)
             st.session_state.iteracion = 0
             st.session_state.optimo_local = False
+            # Temperatura inicial para Simulated Annealing
+            st.session_state.temperatura = 100.0
             
         st.write("")
         metrics_placeholder = st.empty()
@@ -72,11 +75,28 @@ def mostrar_interfaz():
                                 st.session_state.reinas_estado = mejor_estado
                                 st.session_state.iteracion += 1
                                 
-                            st.rerun()
+                        elif algoritmo == "Simulated Annealing":
+                            # Asegurar que haya una temperatura guardada
+                            if 'temperatura' not in st.session_state:
+                                st.session_state.temperatura = 100.0
+                                
+                            nuevo_estado, nueva_temperatura = paso_simulated_annealing(
+                                st.session_state.reinas_estado, 
+                                st.session_state.temperatura
+                            )
+                            
+                            st.session_state.reinas_estado = nuevo_estado
+                            st.session_state.temperatura = nueva_temperatura
+                            st.session_state.iteracion += 1
+                            
+                        st.rerun()
 
             # Resumen visual en la columna izquierda
             with metrics_placeholder.container():
-                st.code(f"🔄 Iteración: {st.session_state.iteracion}\n⚔️ Ataques: {h_actual}")
+                texto_metricas = f"🔄 Iteración: {st.session_state.iteracion}\n⚔️ Ataques: {h_actual}"
+                if algoritmo == "Simulated Annealing" and 'temperatura' in st.session_state:
+                    texto_metricas += f"\n🌡️ Temp: {st.session_state.temperatura:.2f}"
+                st.code(texto_metricas)
                 
                 # Feedback de estado estético
                 if h_actual == 0:
