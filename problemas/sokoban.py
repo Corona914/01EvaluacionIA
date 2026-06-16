@@ -4,15 +4,41 @@ from problemas.algoritmos.AEstrella import busqueda_a_estrella, parsear_mapa
 
 # --- DEFINICIÓN DEL ENTORNO ---
 # #: Pared, ' ': Espacio, T: Objetivo (Target), B: Caja (Box), W: Trabajador (Worker)
-MAPA_NIVEL = [
-    "########",
-    "#T     #",
-    "#      #",
-    "## B W #",
-    "#  B T #",
-    "#      #",
-    "########"
-]
+
+# Diccionario con 4 niveles de dificultad (Asegúrate de que todas las filas tengan el mismo ancho en cada nivel)
+NIVELES = {
+    "Nivel 1 (Fácil)": [
+        "######",
+        "#T B #",
+        "# W  #",
+        "######"
+    ],
+    "Nivel 2 (Intermedio)": [
+        "########",
+        "#T     #",
+        "#      #",
+        "## B W #",
+        "#  B T #",
+        "#      #",
+        "########"
+    ],
+    "Nivel 3 (Difícil)": [
+        "#######",
+        "#T    #",
+        "#  BB #",
+        "#T W  #",
+        "#######"
+    ],
+    "Nivel 4 (Experto)": [
+        "#########",
+        "#       #",
+        "# T B#  #",
+        "# T   W #",
+        "#  #B   #",
+        "#       #",
+        "#########"
+    ]
+}
 
 ICONOS = {
     '#': "🧱",
@@ -61,18 +87,27 @@ def mostrar_interfaz():
     st.caption("A* guía al trabajador para empujar las cajas hasta los objetivos con la menor cantidad de movimientos.")
     st.markdown("---")
 
-    paredes, objetivos, inicio_trabajador, inicio_cajas = parsear_mapa(MAPA_NIVEL)
-    alto = len(MAPA_NIVEL)
-    ancho = len(MAPA_NIVEL[0])
-
     col1, col2 = st.columns([1, 1.6])
 
     with col1:
         st.markdown("##### Configuración")
+        
+        # Selector de nivel de dificultad
+        nivel_seleccionado = st.selectbox(
+            "Selecciona la dificultad:", 
+            list(NIVELES.keys())
+        )
+        mapa_actual = NIVELES[nivel_seleccionado]
+        
         st.caption("Algoritmo: A*")
         st.caption("Heurística: Distancia Manhattan")
         velocidad = 0.50
         ejecutar = st.button("Resolver nivel", type="primary", use_container_width=True)
+
+    # El análisis del mapa ocurre DESPUÉS de que se selecciona el nivel en el dropdown
+    paredes, objetivos, inicio_trabajador, inicio_cajas = parsear_mapa(mapa_actual)
+    alto = len(mapa_actual)
+    ancho = len(mapa_actual[0])
 
     with col2:
         st.markdown("##### Visualización")
@@ -82,7 +117,7 @@ def mostrar_interfaz():
         mapa_placeholder.markdown(renderizar_mapa(ancho, alto, paredes, objetivos, inicio_trabajador, inicio_cajas), unsafe_allow_html=True)
 
     if ejecutar:
-        info_placeholder.info("Ejecutando algoritmo A*...")
+        info_placeholder.info(f"Ejecutando algoritmo A* para el {nivel_seleccionado}...")
         
         camino_w, camino_c, nodos = busqueda_a_estrella(paredes, objetivos, inicio_trabajador, inicio_cajas)
 
@@ -100,4 +135,4 @@ def mostrar_interfaz():
             
             info_placeholder.success(f"¡Nivel resuelto óptimamente en {len(camino_w)-1} movimientos!")
         else:
-            info_placeholder.error("No se encontró una solución posible.")
+            info_placeholder.error("No se encontró una solución posible para este nivel.")

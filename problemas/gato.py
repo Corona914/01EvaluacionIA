@@ -18,7 +18,7 @@ def popup_resultado(ganador):
         st.rerun()
 
 def mostrar_interfaz():
-    st.title("🎮 Gato vs IA (Minimax)")
+    st.title("🎮 Usuario vs IA (Minimax)")
     st.markdown("---")
     
     col1, col2 = st.columns([2, 1])
