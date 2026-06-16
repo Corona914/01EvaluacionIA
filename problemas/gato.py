@@ -1,16 +1,17 @@
 import streamlit as st
+import random
 from problemas.algoritmos.minimax import verificar_ganador, mejor_movimiento
 
 # --- INTERFAZ STREAMLIT ---
 @st.dialog("¡Fin del Juego!")
 def popup_resultado(ganador):
     if ganador == "Empate":
-        st.info("¡Es un reñido empate! ")
+        st.info("¡Es un reñido empate! 🤝")
     elif ganador == "X":
         st.success("¡Increíble! Has derrotado a la IA. 🎉")
         st.balloons()
     else:
-        st.error("¡Has perdido! La IA ha demostrado ser superior.")
+        st.error("¡Has perdido! La IA ha demostrado ser superior. 🤖")
 
     if st.button("Volver a Jugar", type="primary", use_container_width=True):
         st.session_state.tablero_gato = [" "] * 9
@@ -18,16 +19,30 @@ def popup_resultado(ganador):
         st.rerun()
 
 def mostrar_interfaz():
-    st.title("🎮 Usuario vs IA (Minimax)")
+    st.title("🎮 Gato vs IA")
     st.markdown("---")
     
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown(
-            "Enfréntate a la IA utilizando el algoritmo **Minimax**.\n\n"
+            "Enfréntate a la IA eligiendo tu nivel de desafío.\n\n"
             "Tú juegas como **❌** y tienes el primer turno."
         )
+        
+        st.markdown("##### ⚙️ Dificultad")
+        dificultad = st.selectbox(
+            "Nivel", 
+            [
+                "Nivel 1: Fácil (Aleatorio)", 
+                "Nivel 2: Intermedio (Equilibrado)", 
+                "Nivel 3: Difícil (Minimax Invencible)"
+            ], 
+            label_visibility="collapsed"
+        )
+        
     with col2:
+        st.write("")
+        st.write("")
         if st.button("🔄 Reiniciar Partida", use_container_width=True):
             st.session_state.tablero_gato = [" "] * 9
             st.session_state.ganador_gato = None
@@ -62,7 +77,26 @@ def mostrar_interfaz():
             
             # Turno de la IA
             if not st.session_state.ganador_gato:
-                mov = mejor_movimiento(st.session_state.tablero_gato)
+                # Obtener lista de casillas vacías
+                vacios = [i for i, x in enumerate(st.session_state.tablero_gato) if x == " "]
+                mov = None
+                
+                if vacios:
+                    if "Fácil" in dificultad:
+                        # Nivel Fácil: Movimiento 100% aleatorio
+                        mov = random.choice(vacios)
+                    
+                    elif "Intermedio" in dificultad:
+                        # Nivel Intermedio: 50% de probabilidad de usar Minimax, 50% aleatorio
+                        if random.random() < 0.5:
+                            mov = mejor_movimiento(st.session_state.tablero_gato)
+                        else:
+                            mov = random.choice(vacios)
+                    
+                    else:
+                        # Nivel Difícil: 100% Minimax
+                        mov = mejor_movimiento(st.session_state.tablero_gato)
+                        
                 if mov is not None:
                     st.session_state.tablero_gato[mov] = "O"
                     st.session_state.ganador_gato = verificar_ganador(st.session_state.tablero_gato)
